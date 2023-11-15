@@ -1,49 +1,46 @@
 from dag import DAG
+from tabu import Tabu
+from typing import List
+import os 
 
-def q2_dac():
+def q2_dac() -> DAG:
   G = DAG()
-  G[1,31]=1
-  G[2,1]=1
-  G[3,8]=1
-  G[4,3]=1
-  G[5,2]=1
-  G[6,16]=1
-  G[7,6]=1
-  G[8,7]=1
-  G[9,8]=1
-  G[10,9]=1
-  G[11,1]=1
-  G[12,5]=1
-  G[13,12]=1
-  G[14,13]=1
-  G[17,15]=1
-  G[15,11]=1
-  G[16,5]=1
-  G[17,16]=1
-  G[18,17]=1
+  with open(os.path.join('data', 'q2_dac.txt'), 'r') as f:
+    for line in f:
+      x, y = line.split(',')
+      G[int(x), int(y)] = 1
+  return G
 
-  G[19,18]=1
-  G[20,19]=1
-  G[21,18]=1
-  G[22,21]=1
-  G[23,22]=1
-  G[24,5]=1
-  G[25,24]=1
-  G[26,25]=1
-  G[27,26]=1
-  G[28,26]=1
-  G[29,28]=1
-  G[30,4]=1
-  G[30,10]=1
-  G[30,14]=1
-  G[30,20]=1
-  G[30,23]=1
-  G[29,27]=1
-  G[30,29]=1
-  return G 
+def q2_due_dates() -> List[float]:
+  d = []
+  with open(os.path.join('data', 'q2_due_dates.csv'), 'r') as f:
+    lines = [line for line in f]
+    d = [0 for _ in lines]
+    for line in lines:
+      index, due = line.split(',')
+      d[int(index)-1] = float(due)
+  return d
+
+def q2_processing_times() -> List[float]:
+  p = []
+  with open(os.path.join('data', 'q2_processing_times.csv'), 'r') as f:
+    lines = [line for line in f]
+    p = [0 for _ in lines]
+    for line in lines:
+      index, proc = line.split(',')
+      p[int(index)-1] = float(proc)
+  return p
 
 if __name__ == '__main__':
   G = q2_dac()
   G.save_fig('q2_dac.png')
+  p = q2_processing_times()
+  d = q2_due_dates()
+  initial_schedule = [30, 29, 23, 10, 9, 14, 13, 12, 4, 20, 22, 3, 27, 28, 8, 7, 19, 21, 26, 18, 25, 17, 15, 6, 24, 16, 5, 11, 2, 1, 31]
+  w = [1 for _ in range(31)]
+  tabu = Tabu(L=20, gamma=10)
+  print(tabu.tabu_search(initial_schedule, p, d, w, G=G, K=500000, debug=4))
+
+
 
 

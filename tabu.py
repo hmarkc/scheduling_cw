@@ -12,6 +12,7 @@
 from collections import deque
 from typing import List, Tuple, Callable
 from functools import partial
+from dag import DAG
 
 class Tabu(object):
   """
@@ -89,8 +90,19 @@ class Tabu(object):
       if (x1, x2) == pair or (x2, x1) == pair:
         return True
     return False
+  
+  def _swap_valid(self, current_schedule: List[int], i: int, tabu_list: List[int], cost_fn: Callable[[List[int]], float], best_cost: float, G: DAG) -> Tuple[bool, List[int], float]:
+    new_schedule = current_schedule.copy()
+    new_schedule[i], new_schedule[i + 1] = new_schedule[i + 1], new_schedule[i]
+    new_cost = cost_fn(new_schedule)
+    delta = cost_fn(current_schedule) - new_cost
+    valid = new_cost < best_cost
+    valid = valid or (delta > -self.gamma and not self._swap_in_tabu_list(tabu_list, current_schedule[i], current_schedule[i + 1]))
+    valid = valid and (G[new_schedule[i + 1], new_schedule[i]] == 0)
+    return valid, new_schedule, new_cost
 
-  def tabu_search(self, intial_schedule: List[int], processing_times: List[float], due_dates: List[float], weights: List[float], K: int, debug: int=0) -> Tuple[List[int], float]:
+
+  def tabu_search(self, intial_schedule: List[int], processing_times: List[float], due_dates: List[float], weights: List[float], K: int, G: DAG = DAG(), debug: int=0) -> Tuple[List[int], float]:
     """Runs the tabu search algorithm
 
     Args:
@@ -104,6 +116,8 @@ class Tabu(object):
           the weight of each job, where the index of the job in the list is the job number minus one
         K (int): 
           the number of iterations to run the algorithm for
+        G (DAG, optional):
+          the directed acyclic graph representing the job precedences. Defaults to DAG().
         debug (int, optional): 
           the level of debug messages to print. Defaults to 0.
 
@@ -117,15 +131,15 @@ class Tabu(object):
     k = 0 
     current_schedule = intial_schedule
     best_schedule = current_schedule
-    current_cost = cost_fn(current_schedule)
-    best_cost = current_cost
+    best_cost = cost_fn(current_schedule)
     tabu_list = deque([], maxlen=self.L)
     last_swap_index = 0 # index of the second element in the last swap 
+    terminated = False
 
-    while k <= K:
+    while k <= K and not terminated:
       debug_msg = ''
       if debug > 0:
-        debug_msg = f'k: {k}, current_cost: {current_cost}, best_cost: {best_cost}'
+        debug_msg = f'k: {k}, current_cost: {cost_fn(current_schedule)}, best_cost: {best_cost}'
       if debug > 1:
         debug_msg += f', current_schedule: {current_schedule}, best_schedule: {best_schedule}'
       if debug > 2:
@@ -134,21 +148,18 @@ class Tabu(object):
         print(debug_msg)
       i = last_swap_index
       while True: 
-        new_schedule = current_schedule.copy()
-        new_schedule[i], new_schedule[i + 1] = new_schedule[i + 1], new_schedule[i]
-        new_cost = cost_fn(new_schedule)
-        delta = current_cost - new_cost
-        if (delta > -self.gamma and not self._swap_in_tabu_list(tabu_list, current_schedule[i], current_schedule[i + 1])) or new_cost < best_cost:
+        valid_swap, new_schedule, new_cost = self._swap_valid(current_schedule, i, tabu_list, cost_fn, best_cost, G)
+        if valid_swap:
           tabu_list.append((current_schedule[i], current_schedule[i + 1]))
           if new_cost < best_cost:
             best_schedule = new_schedule
             best_cost = new_cost
           current_schedule = new_schedule
-          current_cost = new_cost
           break
         i = (i + 1) % (num_jobs - 1)
         # if we have gone through all the possible swaps, then break
         if i == last_swap_index:
+          terminated = True
           break
 
       last_swap_index = (i + 1) % (num_jobs - 1)
