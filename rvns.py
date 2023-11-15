@@ -1,0 +1,98 @@
+# Initially, the method forms a VNS neighborhood Ni(x) around x, with i = 1. In the next
+# step, called shaking, a random point y ∈ Ni(x) is chosen. If y ∈ Ni(x) is no better than x
+# (g(y) ≥ g(x)), the VNS neighbourhood is expanded into Ni+1(x), such that Ni(x) ⊂ Ni+1(x),
+# and the shaking step is executed again. Continuing in this fashion, if we cannot find a
+# better solution after i exceeds a maximum value I, corresponding to the largest possible
+# neighbourhood NI (x), we move to the next iteration k, revisiting the neighbourhoods from
+# i = 1, but potentially obtaining different results due to randomisation in the shaking step.
+# Once k exceeds the maximum number of iterations K, VNS returns the current solution x.
+# In your code, assume NI (x) to coincide with the entire search space of feasible schedules
+
+import random
+from typing import Callable, List, Tuple
+from utils import total_weighted_tardiness
+from dag import DAG
+from functools import partial
+
+def neighborhood_by_swap(current_schedule: List[int], i: int, seed: int, G: DAG) -> List[int]:
+  """Generates a neighborhood of schedules
+
+  Args:
+      current_schedule (List[int]): 
+        the current schedule of jobs, where the index of the job in the list is the job number minus one
+      i (int): 
+        the index of the neighborhood
+
+  Returns:
+      List[int]: 
+        the randomly selected neighborhood of schedules
+  """
+  random.seed(seed)
+  new_schedule = current_schedule.copy()
+  count = 0
+  while count < i:
+    x = random.randint(0, len(new_schedule)-1)
+    y = random.randint(0, x)
+    valid = True
+    for j in range(y, x+1):
+      if G[new_schedule[y], new_schedule[j]] == 1 or G[new_schedule[j], new_schedule[x]] == 1:
+        valid = False
+        break
+    if not valid:
+      continue
+    new_schedule[x], new_schedule[y] = new_schedule[y], new_schedule[x]
+    count += 1
+  return new_schedule
+
+class RVNS(object):
+  def __init__(self, neighborhood: Callable[[List[int], int, int, DAG], List[int]], max_I: int, seed: int) -> None:
+    self._neighborhood = neighborhood
+    self._max_I = max_I
+    self._seed = seed
+  
+  def rvns_search(self, intial_schedule: List[int], processing_times: List[float], due_dates: List[float], weights: List[float], K: int, G: DAG = DAG(), debug: int=0) -> Tuple[List[int], float]:
+    """Runs the RVNS algorithm
+
+    Args:
+        intial_schedule (List[int]): 
+          the initial schedule of jobs, where the index of the job in the list is the job number minus one
+        processing_times (List[float]): 
+          the processing time of each job, where the index of the job in the list is the job number minus one
+        due_dates (List[float]): 
+          the due date of each job, where the index of the job in the list is the job number minus one
+        weights (List[float]): 
+          the weight of each job, where the index of the job in the list is the job number minus one
+        K (int): 
+          the maximum number of iterations
+        G (DAG, optional): 
+          the directed acyclic graph of the jobs. Defaults to DAG().
+        debug (int, optional): 
+          the debug level. Defaults to 0.
+
+    Returns:
+        Tuple[List[int], float]: 
+          the best schedule found and its cost
+    """
+    cost_fn = partial(total_weighted_tardiness, processing_times=processing_times, due_dates=due_dates, weights=weights)
+    current_schedule = intial_schedule
+    current_cost = cost_fn(current_schedule)
+    k = 0
+    while k < K:
+      debug_msg = ''
+      if debug > 0:
+        debug_msg = f'k: {k}, current_cost: {current_cost}'
+      if debug > 1:
+        debug_msg += f', current_schedule: {current_schedule}'
+      if debug_msg:
+        print(debug_msg)
+      i = 1
+      while i <= self._max_I:
+        new_schedule = self._neighborhood(current_schedule, self._seed, i, G)
+        if cost_fn(new_schedule) < current_cost:
+          current_schedule = new_schedule
+          current_cost = cost_fn(current_schedule)
+          break 
+        i += 1
+      k += 1
+    return current_schedule, current_cost
+
