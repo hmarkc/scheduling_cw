@@ -28,6 +28,12 @@ def total_weighted_tardiness(schedule: List[int], processing_times: List[float],
   return tardiness
 
 def workflow() -> DAG:
+  """Creates the workflow DAG
+
+  Returns:
+      DAG: 
+        the workflow DAG
+  """
   G = DAG()
   with open(os.path.join('data', 'workflow.txt'), 'r') as f:
     for line in f:
@@ -36,6 +42,12 @@ def workflow() -> DAG:
   return G
 
 def theo_due_dates() -> List[float]:
+  """Creates the due dates for the theoretical environment
+
+  Returns:
+      List[float]: 
+        the due dates for the theoretical environment
+  """
   d = []
   with open(os.path.join('data', 'theo_due_dates.csv'), 'r') as f:
     lines = [line for line in f]
@@ -46,6 +58,12 @@ def theo_due_dates() -> List[float]:
   return d
 
 def theo_processing_times() -> List[float]:
+  """Creates the processing times for the theoretical environment
+
+  Returns:
+      List[float]:
+        the processing times for the theoretical environment 
+  """
   p = []
   with open(os.path.join('data', 'theo_processing_times.csv'), 'r') as f:
     lines = [line for line in f]

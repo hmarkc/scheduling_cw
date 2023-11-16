@@ -46,6 +46,16 @@ def neighborhood_by_swap(current_schedule: List[int], i: int, G: DAG) -> List[in
 
 class RVNS(object):
   def __init__(self, neighborhood: Callable[[List[int], int, int, DAG], List[int]], max_I: int, seed: int) -> None:
+    """Initializes the RVNS algorithm
+
+    Args:
+        neighborhood (Callable[[List[int], int, int, DAG], List[int]]): 
+          the neighborhood function
+        max_I (int): 
+          the maximum number of iterations for each neighborhood
+        seed (int): 
+          the seed to use for random number generation
+    """
     self._neighborhood = neighborhood
     self._max_I = max_I
     self._seed = seed
