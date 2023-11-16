@@ -1,4 +1,6 @@
 from typing import List
+from dag import DAG
+import os 
 
 def total_weighted_tardiness(schedule: List[int], processing_times: List[float], due_dates: List[float], weights: List[float]) -> float:
   """Calculates the total weighted tardiness of a schedule
@@ -24,3 +26,31 @@ def total_weighted_tardiness(schedule: List[int], processing_times: List[float],
     time += processing_times[job]
     tardiness += max(0, time - due_dates[job]) * weights[job]
   return tardiness
+
+def workflow() -> DAG:
+  G = DAG()
+  with open(os.path.join('data', 'workflow.txt'), 'r') as f:
+    for line in f:
+      x, y = line.split(',')
+      G[int(x), int(y)] = 1
+  return G
+
+def theo_due_dates() -> List[float]:
+  d = []
+  with open(os.path.join('data', 'theo_due_dates.csv'), 'r') as f:
+    lines = [line for line in f]
+    d = [0 for _ in lines]
+    for line in lines:
+      index, due = line.split(',')
+      d[int(index)-1] = float(due)
+  return d
+
+def theo_processing_times() -> List[float]:
+  p = []
+  with open(os.path.join('data', 'theo_processing_times.csv'), 'r') as f:
+    lines = [line for line in f]
+    p = [0 for _ in lines]
+    for line in lines:
+      index, proc = line.split(',')
+      p[int(index)-1] = float(proc)
+  return p

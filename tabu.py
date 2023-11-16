@@ -44,6 +44,7 @@ class Tabu(object):
     """
     self.L = L 
     self.gamma = gamma
+    self.check_points = []
   
   def _swap_in_tabu_list(self, tabu_list: List[Tuple[int, int]], x1: int, x2: int) -> bool:
     """Checks if a swap is in the tabu list
@@ -99,6 +100,7 @@ class Tabu(object):
         Tuple[List[int], float]: 
           the best schedule of jobs and its total weighted tardiness
     """
+    self.check_points = []
     num_jobs = len(intial_schedule)
     assert num_jobs == len(processing_times) == len(due_dates) == len(weights)
     cost_fn = partial(total_weighted_tardiness, processing_times=processing_times, due_dates=due_dates, weights=weights)
@@ -128,6 +130,7 @@ class Tabu(object):
           if new_cost < best_cost:
             best_schedule = new_schedule
             best_cost = new_cost
+            self.check_points.append((best_schedule, best_cost, k))
           current_schedule = new_schedule
           break
         i = (i + 1) % (num_jobs - 1)
@@ -138,7 +141,7 @@ class Tabu(object):
 
       last_swap_index = (i + 1) % (num_jobs - 1)
       k += 1
-
+    self.check_points.append((best_schedule, best_cost, K))
     return best_schedule, best_cost
 
 if __name__ == '__main__':

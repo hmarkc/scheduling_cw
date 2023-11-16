@@ -13,8 +13,9 @@ from typing import Callable, List, Tuple
 from utils import total_weighted_tardiness
 from dag import DAG
 from functools import partial
+from tabu import Tabu
 
-def neighborhood_by_swap(current_schedule: List[int], i: int, seed: int, G: DAG) -> List[int]:
+def neighborhood_by_swap(current_schedule: List[int], i: int, G: DAG) -> List[int]:
   """Generates a neighborhood of schedules
 
   Args:
@@ -27,7 +28,6 @@ def neighborhood_by_swap(current_schedule: List[int], i: int, seed: int, G: DAG)
       List[int]: 
         the randomly selected neighborhood of schedules
   """
-  random.seed(seed)
   new_schedule = current_schedule.copy()
   count = 0
   while count < i:
@@ -49,8 +49,9 @@ class RVNS(object):
     self._neighborhood = neighborhood
     self._max_I = max_I
     self._seed = seed
+    self.check_points = []
   
-  def rvns_search(self, intial_schedule: List[int], processing_times: List[float], due_dates: List[float], weights: List[float], K: int, G: DAG = DAG(), debug: int=0) -> Tuple[List[int], float]:
+  def rvns_search(self, intial_schedule: List[int], processing_times: List[float], due_dates: List[float], weights: List[float], K: int, G: DAG = DAG(), debug: int=0, optimization=False) -> Tuple[List[int], float]:
     """Runs the RVNS algorithm
 
     Args:
@@ -68,15 +69,22 @@ class RVNS(object):
           the directed acyclic graph of the jobs. Defaults to DAG().
         debug (int, optional): 
           the debug level. Defaults to 0.
+        optimization (bool, optional):
+          whether to optimize the schedule by local search. Defaults to False.
 
     Returns:
         Tuple[List[int], float]: 
           the best schedule found and its cost
     """
+    random.seed(self._seed)
+    self.check_points = []
     cost_fn = partial(total_weighted_tardiness, processing_times=processing_times, due_dates=due_dates, weights=weights)
     current_schedule = intial_schedule
     current_cost = cost_fn(current_schedule)
     k = 0
+    tabu = None 
+    if optimization:
+      tabu = Tabu(L=self._max_I, gamma=0)
     while k < K:
       debug_msg = ''
       if debug > 0:
@@ -87,12 +95,17 @@ class RVNS(object):
         print(debug_msg)
       i = 1
       while i <= self._max_I:
-        new_schedule = self._neighborhood(current_schedule, self._seed, i, G)
-        if cost_fn(new_schedule) < current_cost:
+        new_schedule = self._neighborhood(current_schedule, i, G)
+        new_cost = cost_fn(new_schedule)
+        if optimization:
+          new_schedule, new_cost = tabu.tabu_search(new_schedule, processing_times, due_dates, weights, G=G, K=i)
+        if new_cost < current_cost:
           current_schedule = new_schedule
-          current_cost = cost_fn(current_schedule)
+          current_cost = new_cost
+          self.check_points.append((current_schedule, current_cost, k, i))
           break 
         i += 1
       k += 1
+    self.check_points.append((current_schedule, current_cost, K, 0))
     return current_schedule, current_cost
 

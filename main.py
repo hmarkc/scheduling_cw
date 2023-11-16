@@ -2,36 +2,9 @@ from dag import DAG
 from tabu import Tabu
 from rvns import RVNS, neighborhood_by_swap
 from typing import List
+from utils import *
 import os 
 import argparse
-
-def workflow() -> DAG:
-  G = DAG()
-  with open(os.path.join('data', 'workflow.txt'), 'r') as f:
-    for line in f:
-      x, y = line.split(',')
-      G[int(x), int(y)] = 1
-  return G
-
-def theo_due_dates() -> List[float]:
-  d = []
-  with open(os.path.join('data', 'theo_due_dates.csv'), 'r') as f:
-    lines = [line for line in f]
-    d = [0 for _ in lines]
-    for line in lines:
-      index, due = line.split(',')
-      d[int(index)-1] = float(due)
-  return d
-
-def theo_processing_times() -> List[float]:
-  p = []
-  with open(os.path.join('data', 'theo_processing_times.csv'), 'r') as f:
-    lines = [line for line in f]
-    p = [0 for _ in lines]
-    for line in lines:
-      index, proc = line.split(',')
-      p[int(index)-1] = float(proc)
-  return p
 
 if __name__ == '__main__':
   argparser = argparse.ArgumentParser()
@@ -42,6 +15,7 @@ if __name__ == '__main__':
   argparser.add_argument('-K', type=int, default=1000000, help='the number of iterations to run the algorithm for')
   argparser.add_argument('-debug', type=int, default=0, help='the level of debug messages to print')
   argparser.add_argument('-seed', type=int, default=0, help='the seed to use for random number generation')
+  argparser.add_argument('-opt', action='store_true', default=False, help='whether to optimize the schedule by local search')
   args = argparser.parse_args()
 
   G = workflow()
@@ -64,7 +38,7 @@ if __name__ == '__main__':
     print(tabu.tabu_search(initial_schedule, p, d, w, G=G, K=args.K, debug=args.debug))
   elif args.method == 'rvns':
     rvns = RVNS(neighborhood_by_swap, max_I=len(initial_schedule)-1, seed=args.seed)
-    print(rvns.rvns_search(initial_schedule, p, d, w, G=G, K=args.K, debug=args.debug))
+    print(rvns.rvns_search(initial_schedule, p, d, w, G=G, K=args.K, debug=args.debug, optimization=args.opt))
   else:
     raise ValueError(f'Invalid method: {args.method}')
 
