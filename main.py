@@ -24,11 +24,11 @@ if __name__ == '__main__':
   w = [1 for _ in range(31)]
 
   if args.env == 'theo':
-    p = theo_processing_times()
-    d = theo_due_dates()
+    p = processing_times()
+    d = due_dates()
   elif args.env == 'vm':
-    # TODO: add vm data
-    pass 
+    p = processing_times(vm=True)
+    d = due_dates()
   else:
     raise ValueError(f'Invalid environment: {args.env}')
 

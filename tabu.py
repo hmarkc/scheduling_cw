@@ -120,6 +120,8 @@ class Tabu(object):
         debug_msg += f', current_schedule: {current_schedule}, best_schedule: {best_schedule}'
       if debug > 2:
         debug_msg += f', tabu_list: {tabu_list}'
+      if debug > 3:
+        debug_msg += f', tabu_list_len: {len(tabu_list)}'
       if debug_msg:
         print(debug_msg)
       i = last_swap_index

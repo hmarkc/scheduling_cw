@@ -35,7 +35,7 @@ def workflow() -> DAG:
       G[int(x), int(y)] = 1
   return G
 
-def theo_due_dates() -> List[float]:
+def due_dates() -> List[float]:
   d = []
   with open(os.path.join('data', 'theo_due_dates.csv'), 'r') as f:
     lines = [line for line in f]
@@ -45,9 +45,10 @@ def theo_due_dates() -> List[float]:
       d[int(index)-1] = float(due)
   return d
 
-def theo_processing_times() -> List[float]:
+def processing_times(vm: bool = False) -> List[float]:
   p = []
-  with open(os.path.join('data', 'theo_processing_times.csv'), 'r') as f:
+  file = 'vm_processing_times.csv' if vm else 'theo_processing_times.csv'
+  with open(os.path.join('data', file), 'r') as f:
     lines = [line for line in f]
     p = [0 for _ in lines]
     for line in lines:
