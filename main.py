@@ -15,7 +15,7 @@ if __name__ == '__main__':
   argparser.add_argument('-K', type=int, default=1000000, help='the number of iterations to run the algorithm for')
   argparser.add_argument('-debug', type=int, default=0, help='the level of debug messages to print')
   argparser.add_argument('-seed', type=int, default=0, help='the seed to use for random number generation')
-  argparser.add_argument('-opt', action='store_true', default=False, help='whether to optimize the schedule by local search')
+  argparser.add_argument('-opt', action='store_true', default=False, help='whether to optimize the RVNS schedule by local search')
   args = argparser.parse_args()
 
   G = workflow()
@@ -35,10 +35,14 @@ if __name__ == '__main__':
   if args.method == 'tabu':
     # Expected when K=1000000: [30, 20, 4, 3, 10, 14, 9, 8, 19, 23, 22, 21, 18, 7, 6, 17, 16, 29, 28, 27, 26, 25, 24, 13, 12, 5, 2, 15, 11, 1, 31]
     tabu = Tabu(L=args.L, gamma=args.gamma)
-    print(tabu.tabu_search(initial_schedule, p, d, w, G=G, K=args.K, debug=args.debug))
+    best_schedule, best_cost = tabu.tabu_search(initial_schedule, p, d, w, G=G, K=args.K, debug=args.debug)
+    print('Best schedule:', best_schedule)
+    print('Best cost:', best_cost)
   elif args.method == 'rvns':
     rvns = RVNS(neighborhood_by_swap, max_I=len(initial_schedule)-1, seed=args.seed)
-    print(rvns.rvns_search(initial_schedule, p, d, w, G=G, K=args.K, debug=args.debug, optimization=args.opt))
+    best_schedule, best_cost = rvns.rvns_search(initial_schedule, p, d, w, G=G, K=args.K, debug=args.debug, optimization=args.opt)
+    print('Best schedule:', best_schedule)
+    print('Best cost:', best_cost)
   else:
     raise ValueError(f'Invalid method: {args.method}')
 
