@@ -34,3 +34,5 @@ Run the optimized RVNS algorithm (with the extra refinement step) with 500 itera
     python main.py -method rvns -K 500 -seed 3 -opt
 
 <code>experiment.ipynb</code> contains all the experiments used to generate the graphs in the report. Run it sequentially to repeat all the experiments.
+
+Execution of question 2.1 is in <code>2_1_output.txt</code>, question 2.2 in <code>2_2_output.txt</code>, question 3.2 in <code>3_2_output.txt</code>, and question 3.3 in <code>3_3_output.txt</code>.
